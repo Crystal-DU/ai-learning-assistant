@@ -2,3 +2,5 @@ flask
 pyperclip
 pypdf
 python-pptx
+requests
+beautifulsoup4

@@ -1,49 +1,74 @@
 from flask import Flask, render_template, request
-from pathlib import Path
 from pypdf import PdfReader
 from pptx import Presentation
+import requests
+from bs4 import BeautifulSoup
 
 app = Flask(__name__)
 
 @app.route("/", methods=["GET", "POST"])
 def index():
     prompt = ""
-    #如果用户上传文件，则读取文件内容，覆盖文本框内容
+
     if request.method == "POST":
         note = request.form.get("note", "")
 
-    #文件读取
-    uploaded_file = request.files.get("file")
-    if uploaded_file and uploaded_file.filename:
-        filename = uploaded_file.filename.lower()
+        # URL import
+        url = request.form.get("url", "")
+        if url:
+            headers = {"User-Agent": "Mozilla/5.0"}
+            response = requests.get(url, headers=headers)
+            soup = BeautifulSoup(response.text, "html.parser")
 
-        #根据文件类型读取内容
-        if filename.endswith(".pdf"):
-            reader = PdfReader(uploaded_file)
-            note = ""
+            for tag in soup(["script", "style"]):
+                tag.decompose()
 
-            #txt
-            for page in reader.pages:
-                text = page.extract_text()
-                if text:
-                    note += text + "\n"
+            # Try to find the main content of the page
+            article = soup.find("main") or soup.find("article") or soup.find("div", id="mw-content-text")
+            if article:
+                note = article.get_text(separator="\n")
+            else:
+                note = soup.get_text(separator="\n")
 
-        #pptx
-        elif filename.endswith(".pptx"):
-            presentation = Presentation(uploaded_file)
-            note = ""
+            # Clean the note by removing short lines
+            lines = note.splitlines()
+            cleaned_lines = []
+            for line in lines:
+                line = line.strip()
+                if len(line) > 40:
+                    cleaned_lines.append(line)
+            note = "\n".join(cleaned_lines)
 
-            for slide_number, slide in enumerate(presentation.slides, start=1):
-                note += f"\n--- Slide {slide_number} ---\n"
+        # File import
+        uploaded_file = request.files.get("file")
 
-                for shape in slide.shapes:
-                    if hasattr(shape, "text"):
-                        text = shape.text.strip()
-                        if text:
-                            note += text + "\n"
+        if uploaded_file and uploaded_file.filename:
+            filename = uploaded_file.filename.lower()
 
-        else:
-            note = uploaded_file.read().decode("utf-8")
+            if filename.endswith(".pdf"):
+                reader = PdfReader(uploaded_file)
+                note = ""
+
+                for page in reader.pages:
+                    text = page.extract_text()
+                    if text:
+                        note += text + "\n"
+
+            elif filename.endswith(".pptx"):
+                presentation = Presentation(uploaded_file)
+                note = ""
+
+                for slide_number, slide in enumerate(presentation.slides, start=1):
+                    note += f"\n--- Slide {slide_number} ---\n"
+
+                    for shape in slide.shapes:
+                        if hasattr(shape, "text"):
+                            text = shape.text.strip()
+                            if text:
+                                note += text + "\n"
+
+            else:
+                note = uploaded_file.read().decode("utf-8")
 
         prompt = f"""
 # AI Learning Assistant Prompt
