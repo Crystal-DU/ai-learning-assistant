@@ -1,1 +1,4 @@
+flask
 pyperclip
+pypdf
+python-pptx
