@@ -1,0 +1,9 @@
+Today I learned about FlowSource.
+
+FlowSource is an AI-assisted development platform.
+
+It can help reduce repetitive tasks and improve software delivery efficiency.
+
+I also learned that AI TDS focuses on enterprise AI adoption and business transformation.
+
+My next step is to review more FlowSource materials and complete the remaining AI TDS learning modules.
