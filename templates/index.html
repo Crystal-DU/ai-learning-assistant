@@ -12,7 +12,7 @@
         }
 
         .container {
-            max-width: 900px;
+            max-width: 1100px;
             margin: auto;
             background: white;
             padding: 32px;
@@ -20,23 +20,56 @@
             box-shadow: 0 8px 24px rgba(0, 0, 0, 0.08);
         }
 
-        h1 {
-            margin-bottom: 8px;
-        }
-
         .subtitle {
             color: #6b7280;
             margin-bottom: 24px;
         }
 
-        textarea {
+        .grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 24px;
+            align-items: start;
+        }
+
+        .panel {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .top-tools,
+        .info-box {
+            height: 140px;
+            box-sizing: border-box;
+        }
+
+        .info-box {
+            background: #f9fafb;
+            border: 1px solid #e5e7eb;
+            border-radius: 12px;
+            padding: 12px;
+            color: #6b7280;
+        }
+
+        textarea,
+        input[type="url"] {
             width: 100%;
+            box-sizing: border-box;
             border: 1px solid #d1d5db;
             border-radius: 12px;
-            padding: 16px;
+            padding: 12px;
             font-size: 14px;
-            box-sizing: border-box;
+        }
+
+        .content-box {
+            height: 420px;
             resize: vertical;
+        }
+
+        input[type="file"] {
+            width: 100%;
+            margin-top: 8px;
+            margin-bottom: 12px;
         }
 
         button {
@@ -65,54 +98,83 @@
         .copy-btn:hover {
             background: #059669;
         }
+
+        @media (max-width: 800px) {
+            .grid {
+                grid-template-columns: 1fr;
+            }
+        }
     </style>
 </head>
-<body>
 
+<body>
 <div class="container">
     <h1>AI Learning Assistant</h1>
     <p class="subtitle">
-        Generate structured AI prompts from learning notes.
+        Extract content from notes, files, or URLs, then generate an AI prompt.
     </p>
 
     <form method="POST" enctype="multipart/form-data">
-        <label>Import from URL</label>
+        <div class="grid">
 
-<input
-    type="url"
-    name="url"
-    placeholder="Paste a webpage URL here..."
-    style="width: 100%; padding: 12px; margin: 10px 0 20px 0;"
->
+            <div class="panel">
+                <h2>1. Source Input</h2>
 
-        <label class="file-label">Upload Files</label>
+                <div class="top-tools">
+                    <label>Import from URL</label>
+                    <input type="url" name="url" placeholder="Paste a webpage URL here...">
 
-<input
-    class="file-input"
-    type="file"
-    name="file"
-    accept=".txt,.md,.pdf,.pptx"
->
+                    <br><br>
 
-<br><br>
-        <textarea
-            name="note"
-            rows="12"
-            placeholder="Paste your learning notes here..."
-        ></textarea>
+                    <label>Upload Files</label>
+                    <input type="file" name="file" accept=".txt,.md,.pdf,.pptx">
+                </div>
 
-        <button type="submit">Generate Prompt</button>
+                <label>Or paste text manually</label>
+                <textarea
+                    class="content-box"
+                    name="raw_text"
+                    placeholder="Paste your original notes here..."
+                >{{ raw_text }}</textarea>
+
+                <button type="submit" name="action" value="extract">
+                    Extract Content
+                </button>
+            </div>
+
+            <div class="panel">
+                <h2>2. Extracted Content Preview</h2>
+
+                <div class="info-box">
+                    <strong>Preview Area</strong><br>
+                    Review and edit extracted content before generating the prompt.
+                </div>
+
+                <label>Editable extracted content</label>
+                <textarea
+                    class="content-box"
+                    name="extracted_content"
+                    placeholder="Extracted content will appear here."
+                >{{ extracted_content }}</textarea>
+
+                <button type="submit" name="action" value="generate">
+                    Generate Prompt
+                </button>
+            </div>
+
+        </div>
+
+        {% if prompt %}
+        <div class="result">
+            <h2>3. Generated Prompt</h2>
+            <textarea id="promptBox" rows="16" readonly>{{ prompt }}</textarea>
+
+            <button type="button" class="copy-btn" onclick="copyPrompt()">
+                Copy Prompt
+            </button>
+        </div>
+        {% endif %}
     </form>
-
-    {% if prompt %}
-    <div class="result">
-        <h2>Generated Prompt</h2>
-
-        <textarea id="promptBox" rows="16" readonly>{{ prompt }}</textarea>
-
-        <button class="copy-btn" onclick="copyPrompt()">Copy Prompt</button>
-    </div>
-    {% endif %}
 </div>
 
 <script>
@@ -123,6 +185,5 @@ function copyPrompt() {
     alert("Prompt copied!");
 }
 </script>
-
 </body>
 </html>
