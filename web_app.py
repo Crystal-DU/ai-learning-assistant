@@ -4,14 +4,43 @@ from pptx import Presentation
 import requests
 from bs4 import BeautifulSoup
 
-source_name = "Manual Input"
-source_type = "TEXT"
 app = Flask(__name__)
 
 
-def build_prompt(note):
+def build_prompt(note, mode):
+    if mode == "meeting":
+        return f"""
+# AI Meeting Summary Prompt
+
+You are an AI meeting assistant.
+
+Please analyze the following meeting notes and generate structured meeting minutes.
+
+## Meeting Overview
+- Summarize the purpose and main topic of the meeting.
+
+## Key Discussion Points
+- List the important discussion points.
+
+## Decisions Made
+- List decisions made during the meeting.
+
+## Action Items
+- List action items with owner and deadline if available.
+
+## Risks / Issues
+- List any risks, blockers, or open issues.
+
+## Next Steps
+- List the next steps.
+
+## Meeting Notes
+
+{note}
+"""
+
     return f"""
-# AI Learning Assistant Prompt
+# AI Learning Summary Prompt
 
 You are an AI learning assistant.
 
@@ -42,9 +71,11 @@ def index():
     extracted_content = ""
     source_name = "Manual Input"
     source_type = "TEXT"
+    mode = "prompt"
 
     if request.method == "POST":
         action = request.form.get("action")
+        mode = request.form.get("mode", "prompt")
         raw_text = request.form.get("raw_text", "")
         url = request.form.get("url", "")
         edited_content = request.form.get("extracted_content", "")
@@ -52,12 +83,17 @@ def index():
         if action == "extract":
             extracted_content = raw_text
 
+            if raw_text:
+                source_name = "Manual Input"
+                source_type = "TEXT"
+
             if url:
+                source_name = url
+                source_type = "URL"
+
                 headers = {"User-Agent": "Mozilla/5.0"}
                 response = requests.get(url, headers=headers)
                 soup = BeautifulSoup(response.text, "html.parser")
-                source_name = url
-                source_type = "URL"
 
                 for tag in soup(["script", "style"]):
                     tag.decompose()
@@ -112,19 +148,22 @@ def index():
                                 text = shape.text.strip()
                                 if text:
                                     extracted_content += text + "\n"
-                
+
                 elif filename.endswith(".txt"):
                     source_type = "TXT"
-                
+                    extracted_content = uploaded_file.read().decode("utf-8")
+
                 elif filename.endswith(".md"):
                     source_type = "MARKDOWN"
+                    extracted_content = uploaded_file.read().decode("utf-8")
 
                 else:
+                    source_type = "UNKNOWN"
                     extracted_content = uploaded_file.read().decode("utf-8")
 
         elif action == "generate":
             extracted_content = edited_content
-            prompt = build_prompt(extracted_content)
+            prompt = build_prompt(extracted_content, mode)
 
     return render_template(
         "index.html",
@@ -132,7 +171,8 @@ def index():
         extracted_content=extracted_content,
         prompt=prompt,
         source_name=source_name,
-        source_type=source_type
+        source_type=source_type,
+        mode=mode
     )
 
 

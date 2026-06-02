@@ -30,7 +30,8 @@
 
         .subtitle {
             color: #6b7280;
-            margin-top: 8px;
+            margin-top: 10px;
+            margin-bottom: 0;
         }
 
         .reset-btn {
@@ -186,6 +187,30 @@
                 grid-template-columns: 1fr 1fr;
             }
         }
+        .mode-switch{
+            display:flex;
+            gap:12px;
+            margin-bottom:12px;
+        }
+        .mode-btn{
+            padding:12px 20px;
+            border:none;
+            border-radius:12px;
+            background:#ffffff;
+            color:#374151;
+            font-weight:600;
+            cursor:pointer;
+            box-shadow:0 2px 8px rgba(0,0,0,0.08);
+            transition:all 0.2s ease;
+        }
+        .mode-btn:hover{
+            transform:translateY(-2px);
+            box-shadow:0 6px 14px rgba(0,0,0,0.12);
+        }
+        .mode-btn.active {
+            background: linear-gradient(135deg, #4f46e5, #2563eb);
+            color: white;
+        }
     </style>
 </head>
 
@@ -206,6 +231,17 @@
     </div>
 
     <form method="POST" enctype="multipart/form-data">
+
+        <div class="mode-switch">
+            <button type="button" id="promptBtn" class="mode-btn active" onclick="setMode('prompt')">
+                Prompt Generator
+            </button>
+
+            <button type="button" id="meetingBtn" class="mode-btn" onclick="setMode('meeting')">
+                Meeting Summarizer
+            </button>
+        </div>
+        <input type="hidden" name="mode" id="selectedMode" value="{{ mode }}">
 
         <div class="grid">
 
@@ -313,6 +349,17 @@
 </div>
 
 <script>
+function setMode(mode) {
+    document.getElementById("selectedMode").value = mode;
+    document.getElementById("promptBtn").classList.remove("active");
+    document.getElementById("meetingBtn").classList.remove("active");
+
+    if (mode === "prompt") {
+        document.getElementById("promptBtn").classList.add("active");
+    } else {
+        document.getElementById("meetingBtn").classList.add("active");
+    }
+}
 function copyPrompt() {
     const promptBox = document.getElementById("promptBox");
     promptBox.select();
